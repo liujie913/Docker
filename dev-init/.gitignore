@@ -1,0 +1,5 @@
+bin/
+mysql/data
+redis/*
+jenkins/*
+

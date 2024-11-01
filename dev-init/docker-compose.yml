@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  ############ 基础服务 ##########
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    ports:
+      - "63306:3306"
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --lower_case_table_names=1
+    volumes:
+#      - $W/mysql/conf:/etc/mysql/mysql.conf.d
+      - $W/mysql/data:/var/lib/mysql
+  redis:
+    image: redis:5.0
+    container_name: redis
+    ports:
+    - "6379:6379"
+    environment:
+    - TZ=Asia/Shanghai
+    restart: always
+    command: redis-server /etc/redis/redis.conf
+    volumes:
+    - $W/redis/redis.conf:/etc/redis/redis.conf
+    # - $W/redis/data:/data
+  jenkins:
+    # 这里的版本号，使用从官网上查看的最新 LTS 版本号
+    image: jenkins/jenkins
+    container_name: jenkins
+    restart: always
+    ports:
+      # web访问端口
+      - "8066:8080"
+    volumes:
+      # jenkins的数据和配置文件目录映射
+      - $W/jenkins/app/jenkins/data:/var/jenkins_home
+      # 将外部的jdk目录映射到容器内部
+      - $W/jenkins/app/jdk:/app/jdk
+      # 将外部的maven目录映射到容器内部
+      - $W/jenkins/app/maven:/app/maven
