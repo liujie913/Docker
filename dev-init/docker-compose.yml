@@ -42,3 +42,58 @@ services:
       - $W/jenkins/app/jdk:/app/jdk
       # 将外部的maven目录映射到容器内部
       - $W/jenkins/app/maven:/app/maven
+  openssh-server:
+    image: lscr.io/linuxserver/openssh-server:9.0_p1-r2-ls103
+    container_name: openssh-server
+    hostname: openssh-server #optional
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - PUBLIC_KEY=root #optional
+      - SUDO_ACCESS=false #optional
+      - PASSWORD_ACCESS=false #optional
+      - USER_PASSWORD=password #optional
+      - USER_PASSWORD_FILE=/path/to/file #optional
+      - USER_NAME=linuxserver.io #optional
+      - LOG_STDOUT= #optional
+    volumes:
+      - /path/to/openssh-server/config:/config
+    ports:
+      - 2222:2222
+    restart: unless-stopped
+  elasticsearch:
+    image: elasticsearch:7.12.1
+    container_name: elasticsearch
+    environment:
+      - "cluster.name=elasticsearch" #设置集群名称为elasticsearch
+      - "discovery.type=single-node" #以单一节点模式启动
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" #设置使用jvm内存大小
+    volumes:
+      - $W/elk/es/plugins:/usr/share/elasticsearch/plugins #插件文件挂载
+      - $W/elk/es/data:/usr/share/elasticsearch/data #数据文件挂载
+    ports:
+      - 9200:9200
+      - 9300:9300
+  kibana:
+    image: kibana:7.12.1
+    container_name: kibana
+    links:
+      - elasticsearch:es #可以用es这个域名访问elasticsearch服务
+    depends_on:
+      - elasticsearch #kibana在elasticsearch启动之后再启动
+    environment:
+      - "elasticsearch.hosts=http://es:9200" #设置访问elasticsearch的地址
+    ports:
+      - 5601:5601
+  logstash:
+    image: logstash:7.12.1
+    container_name: logstash
+    volumes:
+      - $W/elk/logstash/logstash-springboot.conf:/usr/share/logstash/pipeline/logstash.conf #挂载logstash的配置文件
+    depends_on:
+      - elasticsearch #kibana在elasticsearch启动之后再启动
+    links:
+      - elasticsearch:es #可以用es这个域名访问elasticsearch服务
+    ports:
+      - 4560:4560
